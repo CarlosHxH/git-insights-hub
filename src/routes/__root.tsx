@@ -9,6 +9,8 @@ import {
 } from "@tanstack/react-router";
 
 import appCss from "../styles.css?url";
+import { AppShell } from "@/components/app-shell";
+import { Toaster } from "@/components/ui/sonner";
 
 function NotFoundComponent() {
   return (
@@ -72,20 +74,20 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { title: "DevMetrics — GitHub & GitLab analytics" },
+      { name: "description", content: "High-performance analytics, KPIs, DORA metrics and dashboards for GitHub and GitLab projects." },
+      { name: "author", content: "DevMetrics" },
+      { name: "theme-color", content: "#0b1220" },
+      { property: "og:title", content: "DevMetrics" },
+      { property: "og:description", content: "Analytics & DORA metrics for GitHub and GitLab." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
     ],
     links: [
-      {
-        rel: "stylesheet",
-        href: appCss,
-      },
+      { rel: "stylesheet", href: appCss },
+      { rel: "manifest", href: "/manifest.webmanifest" },
+      { rel: "icon", href: "/favicon.svg", type: "image/svg+xml" },
     ],
   }),
   shellComponent: RootShell,
@@ -113,7 +115,10 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <Outlet />
+      <AppShell>
+        <Outlet />
+      </AppShell>
+      <Toaster richColors position="top-right" theme="dark" />
     </QueryClientProvider>
   );
 }
