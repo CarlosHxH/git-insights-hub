@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { NoToken, ErrorState } from "@/components/empty-state";
@@ -47,21 +47,23 @@ function UsersPage() {
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
         {list.map((m, i) => (
-          <Card key={m.id} className="p-4 bg-card/60 backdrop-blur glow flex items-center gap-3">
-            <span className="size-6 grid place-items-center rounded-md bg-muted text-[10px] tabular-nums">{i + 1}</span>
-            <Avatar className="size-10">
-              <AvatarImage src={m.avatar} />
-              <AvatarFallback>{m.login.slice(0, 2).toUpperCase()}</AvatarFallback>
-            </Avatar>
-            <div className="flex-1 min-w-0">
-              <div className="text-sm font-medium truncate">{m.name ?? m.login}</div>
-              <div className="text-xs text-muted-foreground truncate">@{m.login}</div>
-            </div>
-            <div className="text-right">
-              <div className="text-lg font-bold tabular-nums">{m.commits}</div>
-              <div className="text-[10px] uppercase tracking-wider text-muted-foreground">commits</div>
-            </div>
-          </Card>
+          <Link key={m.id} to="/users/$login" params={{ login: m.login }}>
+            <Card className="p-4 bg-card/60 backdrop-blur glow flex items-center gap-3 hover:border-primary/60 transition-colors">
+              <span className="size-6 grid place-items-center rounded-md bg-muted text-[10px] tabular-nums">{i + 1}</span>
+              <Avatar className="size-10">
+                <AvatarImage src={m.avatar} />
+                <AvatarFallback>{m.login.slice(0, 2).toUpperCase()}</AvatarFallback>
+              </Avatar>
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-medium truncate">{m.name ?? m.login}</div>
+                <div className="text-xs text-muted-foreground truncate">@{m.login}</div>
+              </div>
+              <div className="text-right">
+                <div className="text-lg font-bold tabular-nums">{m.commits}</div>
+                <div className="text-[10px] uppercase tracking-wider text-muted-foreground">commits</div>
+              </div>
+            </Card>
+          </Link>
         ))}
         {!list.length && (
           <div className="text-sm text-muted-foreground">

@@ -281,6 +281,158 @@ export async function fetchMembers(): Promise<Member[]> {
   }
 }
 
+/* ----------------------------- Search & Explore -------------------------- */
+
+export type UserProfile = {
+  login: string;
+  name: string | null;
+  avatar: string;
+  bio: string | null;
+  url: string;
+  followers: number;
+  following: number;
+  publicRepos: number;
+  company: string | null;
+  location: string | null;
+  blog: string | null;
+  createdAt: string;
+  provider: "github" | "gitlab";
+};
+
+export type UserEvent = {
+  id: string;
+  type: string;
+  repo: string;
+  date: string;
+  summary: string;
+};
+
+export type SearchRepoResult = Repo & { ownerAvatar?: string };
+
+export async function searchRepos(query: string, perPage = 30): Promise<SearchRepoResult[]> {
+  if (!query.trim()) return [];
+  if (provider() === "github") {
+    type GHSRepos = { items: (GHRepo & { owner: { avatar_url: string } })[] };
+    const data = await ghFetch<GHSRepos>("/search/repositories", {
+      q: query, per_page: perPage, sort: "stars", order: "desc",
+    });
+    return data.items.map((r) => ({ ...ghRepo(r), ownerAvatar: r.owner?.avatar_url }));
+  } else {
+    const list = await glFetch<GLProject[]>("/projects", {
+      search: query, per_page: perPage, order_by: "star_count", sort: "desc",
+    });
+    return list.map(glProject);
+  }
+}
+
+export async function searchUsers(query: string, perPage = 30): Promise<Member[]> {
+  if (!query.trim()) return [];
+  if (provider() === "github") {
+    type GHSUsers = { items: { id: number; login: string; avatar_url: string; html_url: string }[] };
+    const data = await ghFetch<GHSUsers>("/search/users", { q: query, per_page: perPage });
+    return data.items.map((u) => ({ id: String(u.id), login: u.login, name: null, avatar: u.avatar_url, url: u.html_url }));
+  } else {
+    type GLU = { id: number; username: string; name: string; avatar_url: string; web_url: string };
+    const list = await glFetch<GLU[]>("/users", { search: query, per_page: perPage });
+    return list.map((u) => ({ id: String(u.id), login: u.username, name: u.name, avatar: u.avatar_url, url: u.web_url }));
+  }
+}
+
+export async function fetchUserProfile(login: string): Promise<UserProfile> {
+  if (provider() === "github") {
+    type GHUser = {
+      id: number; login: string; name: string | null; avatar_url: string; bio: string | null;
+      html_url: string; followers: number; following: number; public_repos: number;
+      company: string | null; location: string | null; blog: string | null; created_at: string;
+    };
+    const u = await ghFetch<GHUser>(`/users/${login}`);
+    return {
+      login: u.login, name: u.name, avatar: u.avatar_url, bio: u.bio, url: u.html_url,
+      followers: u.followers, following: u.following, publicRepos: u.public_repos,
+      company: u.company, location: u.location, blog: u.blog || null,
+      createdAt: u.created_at, provider: "github",
+    };
+  } else {
+    type GLUser = {
+      id: number; username: string; name: string; avatar_url: string; bio: string | null;
+      web_url: string; followers: number; following: number; public_repos?: number;
+      organization: string | null; location: string | null; website_url: string | null; created_at: string;
+    };
+    const u = await glFetch<GLUser>(`/users/${encodeURIComponent(login)}`);
+    return {
+      login: u.username, name: u.name, avatar: u.avatar_url, bio: u.bio, url: u.web_url,
+      followers: u.followers ?? 0, following: u.following ?? 0, publicRepos: u.public_repos ?? 0,
+      company: u.organization, location: u.location, blog: u.website_url || null,
+      createdAt: u.created_at, provider: "gitlab",
+    };
+  }
+}
+
+export async function fetchUserRepos(login: string, perPage = 30): Promise<Repo[]> {
+  if (provider() === "github") {
+    const list = await ghFetch<GHRepo[]>(`/users/${login}/repos`, {
+      per_page: perPage, sort: "updated", type: "public",
+    });
+    return list.map(ghRepo);
+  } else {
+    type GLU = { id: number };
+    const user = await glFetch<GLU>(`/users/${encodeURIComponent(login)}`);
+    const list = await glFetch<GLProject[]>(`/users/${user.id}/projects`, {
+      per_page: perPage, order_by: "last_activity_at",
+    });
+    return list.map(glProject);
+  }
+}
+
+export async function fetchUserActivity(login: string, perPage = 30): Promise<UserEvent[]> {
+  if (provider() === "github") {
+    type GHEvent = {
+      id: string; type: string; created_at: string;
+      repo: { name: string };
+      payload: {
+        commits?: { message: string }[];
+        action?: string;
+        ref?: string;
+        pull_request?: { title: string };
+        issue?: { title: string };
+      };
+    };
+    const list = await ghFetch<GHEvent[]>(`/users/${login}/events/public`, { per_page: perPage });
+    return list.map((e) => {
+      let summary = e.type.replace("Event", "");
+      if (e.type === "PushEvent" && e.payload.commits?.length) {
+        summary = `Pushed: ${e.payload.commits[0].message.split("\n")[0]}`;
+      } else if (e.type === "PullRequestEvent") {
+        summary = `PR ${e.payload.action}: ${e.payload.pull_request?.title ?? ""}`;
+      } else if (e.type === "IssuesEvent") {
+        summary = `Issue ${e.payload.action}: ${e.payload.issue?.title ?? ""}`;
+      } else if (e.type === "CreateEvent") {
+        summary = `Created ${e.payload.ref ?? ""}`;
+      } else if (e.type === "WatchEvent") {
+        summary = "Starred";
+      } else if (e.type === "ForkEvent") {
+        summary = "Forked";
+      }
+      return { id: e.id, type: e.type, repo: e.repo.name, date: e.created_at, summary };
+    });
+  } else {
+    type GLEvent = {
+      id: number; action_name: string; created_at: string;
+      project_id: number;
+      push_data?: { commit_title?: string };
+      target_title?: string;
+    };
+    const list = await glFetch<GLEvent[]>(`/users/${encodeURIComponent(login)}/events`, { per_page: perPage });
+    return list.map((e) => ({
+      id: String(e.id),
+      type: e.action_name,
+      repo: String(e.project_id),
+      date: e.created_at,
+      summary: e.push_data?.commit_title ?? e.target_title ?? e.action_name,
+    }));
+  }
+}
+
 export async function fetchReadme(repoFullName: string): Promise<string | null> {
   try {
     if (provider() === "github") {

@@ -13,8 +13,10 @@ import { Route as UsersRouteImport } from './routes/users'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as ProjectsRouteImport } from './routes/projects'
 import { Route as PipelinesRouteImport } from './routes/pipelines'
+import { Route as ExploreRouteImport } from './routes/explore'
 import { Route as ActivityRouteImport } from './routes/activity'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as UsersLoginRouteImport } from './routes/users.$login'
 import { Route as ProjectsIdRouteImport } from './routes/projects.$id'
 
 const UsersRoute = UsersRouteImport.update({
@@ -37,6 +39,11 @@ const PipelinesRoute = PipelinesRouteImport.update({
   path: '/pipelines',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ExploreRoute = ExploreRouteImport.update({
+  id: '/explore',
+  path: '/explore',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ActivityRoute = ActivityRouteImport.update({
   id: '/activity',
   path: '/activity',
@@ -47,6 +54,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const UsersLoginRoute = UsersLoginRouteImport.update({
+  id: '/$login',
+  path: '/$login',
+  getParentRoute: () => UsersRoute,
+} as any)
 const ProjectsIdRoute = ProjectsIdRouteImport.update({
   id: '/$id',
   path: '/$id',
@@ -56,68 +68,81 @@ const ProjectsIdRoute = ProjectsIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/activity': typeof ActivityRoute
+  '/explore': typeof ExploreRoute
   '/pipelines': typeof PipelinesRoute
   '/projects': typeof ProjectsRouteWithChildren
   '/settings': typeof SettingsRoute
-  '/users': typeof UsersRoute
+  '/users': typeof UsersRouteWithChildren
   '/projects/$id': typeof ProjectsIdRoute
+  '/users/$login': typeof UsersLoginRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/activity': typeof ActivityRoute
+  '/explore': typeof ExploreRoute
   '/pipelines': typeof PipelinesRoute
   '/projects': typeof ProjectsRouteWithChildren
   '/settings': typeof SettingsRoute
-  '/users': typeof UsersRoute
+  '/users': typeof UsersRouteWithChildren
   '/projects/$id': typeof ProjectsIdRoute
+  '/users/$login': typeof UsersLoginRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/activity': typeof ActivityRoute
+  '/explore': typeof ExploreRoute
   '/pipelines': typeof PipelinesRoute
   '/projects': typeof ProjectsRouteWithChildren
   '/settings': typeof SettingsRoute
-  '/users': typeof UsersRoute
+  '/users': typeof UsersRouteWithChildren
   '/projects/$id': typeof ProjectsIdRoute
+  '/users/$login': typeof UsersLoginRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
     | '/activity'
+    | '/explore'
     | '/pipelines'
     | '/projects'
     | '/settings'
     | '/users'
     | '/projects/$id'
+    | '/users/$login'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/activity'
+    | '/explore'
     | '/pipelines'
     | '/projects'
     | '/settings'
     | '/users'
     | '/projects/$id'
+    | '/users/$login'
   id:
     | '__root__'
     | '/'
     | '/activity'
+    | '/explore'
     | '/pipelines'
     | '/projects'
     | '/settings'
     | '/users'
     | '/projects/$id'
+    | '/users/$login'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ActivityRoute: typeof ActivityRoute
+  ExploreRoute: typeof ExploreRoute
   PipelinesRoute: typeof PipelinesRoute
   ProjectsRoute: typeof ProjectsRouteWithChildren
   SettingsRoute: typeof SettingsRoute
-  UsersRoute: typeof UsersRoute
+  UsersRoute: typeof UsersRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
@@ -150,6 +175,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PipelinesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/explore': {
+      id: '/explore'
+      path: '/explore'
+      fullPath: '/explore'
+      preLoaderRoute: typeof ExploreRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/activity': {
       id: '/activity'
       path: '/activity'
@@ -163,6 +195,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/users/$login': {
+      id: '/users/$login'
+      path: '/$login'
+      fullPath: '/users/$login'
+      preLoaderRoute: typeof UsersLoginRouteImport
+      parentRoute: typeof UsersRoute
     }
     '/projects/$id': {
       id: '/projects/$id'
@@ -186,13 +225,24 @@ const ProjectsRouteWithChildren = ProjectsRoute._addFileChildren(
   ProjectsRouteChildren,
 )
 
+interface UsersRouteChildren {
+  UsersLoginRoute: typeof UsersLoginRoute
+}
+
+const UsersRouteChildren: UsersRouteChildren = {
+  UsersLoginRoute: UsersLoginRoute,
+}
+
+const UsersRouteWithChildren = UsersRoute._addFileChildren(UsersRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ActivityRoute: ActivityRoute,
+  ExploreRoute: ExploreRoute,
   PipelinesRoute: PipelinesRoute,
   ProjectsRoute: ProjectsRouteWithChildren,
   SettingsRoute: SettingsRoute,
-  UsersRoute: UsersRoute,
+  UsersRoute: UsersRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

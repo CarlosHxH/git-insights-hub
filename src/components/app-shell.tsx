@@ -1,7 +1,7 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
   Activity, BarChart3, GitBranch, Users, Settings as SettingsIcon,
-  Search, Github, Gitlab, Zap,
+  Search, Github, Gitlab, Zap, Compass,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useSettings } from "@/lib/settings";
@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 
 const nav = [
   { to: "/", label: "Overview", icon: BarChart3 },
+  { to: "/explore", label: "Explore", icon: Compass },
   { to: "/projects", label: "Projects", icon: GitBranch },
   { to: "/users", label: "Users", icon: Users },
   { to: "/activity", label: "Activity", icon: Activity },
