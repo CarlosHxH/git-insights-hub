@@ -1,6 +1,6 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
-  Activity, BarChart3, GitBranch, GitMerge, Gauge, Users, Settings as SettingsIcon,
+  Activity, BarChart3, GitBranch, Users, Settings as SettingsIcon,
   Search, Github, Gitlab, Zap,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -14,8 +14,6 @@ const nav = [
   { to: "/users", label: "Users", icon: Users },
   { to: "/activity", label: "Activity", icon: Activity },
   { to: "/pipelines", label: "Pipelines", icon: Zap },
-  { to: "/dora", label: "DORA", icon: Gauge },
-  { to: "/compare", label: "Compare", icon: GitMerge },
   { to: "/settings", label: "Settings", icon: SettingsIcon },
 ] as const;
 
